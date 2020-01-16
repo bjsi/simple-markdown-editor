@@ -1,79 +1,9 @@
-enum TagType {
-    Paragraph,
-    Header1,
-    Header2,
-    Header3,
-    HorizontalRule
-}
-
-class TagTypeToHtml{
-    private readonly tagType: Map<TagType, string> = new Map<TagType, string>();
-    constructor() {
-        this.tagType.set(TagType.Header1, "h1");
-        this.tagType.set(TagType.Header2, "h2");
-        this.tagType.set(TagType.Header3, "h3");
-        this.tagType.set(TagType.Paragraph, "p");
-        this.tagType.set(TagType.HorizontalRule, "hr");
-    }
-    
-    private GetTag(tagType: TagType, openingTagPattern: string)  {
-        let tag = this.tagType.get(tagType);
-        if (tag) {
-            return `${openingTagPattern}${tag}>`;
-        }
-        return `${openingTagPattern}p>`;
-    }
-
-    public OpeningTag(tagType: TagType): string {
-        return this.GetTag(tagType, "<");
-    }
-
-    public ClosingTag(tagType: TagType): string {
-        return this.GetTag(tagType, "</");
-    }
-}
-
-class HtmlHandler {
-    public TextChangeHandler(id: string, output: string): void {
-        let markdown = <HTMLTextAreaElement>document.getElementById(id);
-        let markdownOutput = <HTMLTextAreaElement>document.getElementById(output);
-        if (markdown != null) {
-            markdown.onkeyup = (e) => {
-                if (markdown.value) {
-                    markdownOutput.innerHTML = markdown.value;
-                }
-                else
-                { 
-                    markdownOutput.innerHTML = "<p></p>";
-                }
-            }
-        }
-    }
-}
-
-interface IMarkdownDocument {
-    Add(...content: string[]): void;
-    Get(): string
-}
-
-class MarkdownDocument implements IMarkdownDocument {
-    
-    private content: string = "";
-
-    Add(...content: string[]): void {
-        content.forEach(str => {
-            this.content += str;
-        });
-    }
-
-    Get(): string {
-        return this.content;
-    }
-}
-
-class ParseElement {
-    CurrentLine: string = "";
-}
+// Tags
+import { TagType, TagTypeToHtml } from './tags'
+// Markdown
+import { IMarkdownDocument, ParseElement } from './markdown'
+// HTML
+import { HtmlHandler } from './html';
 
 interface IVisitor {
     Visit(token: ParseElement, markdownDocument: IMarkdownDocument): void;
@@ -109,15 +39,45 @@ class Header3Visitor extends VisitorBase {
     }
 }
 
-class ParagraphVisitor extends VisitorBase {
+class Header4Visitor extends VisitorBase {
     constructor() {
-        super(TagType.Paragraph, new TagTypeToHtml());
+        super(TagType.Header4, new TagTypeToHtml());
+    }
+}
+
+class Header5Visitor extends VisitorBase {
+    constructor() {
+        super(TagType.Header5, new TagTypeToHtml());
+    }
+}
+
+class Header6Visitor extends VisitorBase {
+    constructor() {
+        super(TagType.Header6, new TagTypeToHtml());
+    }
+}
+
+class BoldVisitor extends VisitorBase {
+    constructor() {
+        super(TagType.Bold, new TagTypeToHtml());
+    }
+}
+
+class ItalicsVisitor extends VisitorBase {
+    constructor() {
+        super(TagType.Italics, new TagTypeToHtml());
     }
 }
 
 class HorizontalRuleVisitor extends VisitorBase {
     constructor() {
         super(TagType.HorizontalRule, new TagTypeToHtml());
+    }
+}
+
+class ParagraphVisitor extends VisitorBase {
+    constructor() {
+        super(TagType.Paragraph, new TagTypeToHtml());
     }
 }
 
@@ -162,7 +122,6 @@ class ParseChainHandler extends Handler<ParseElement> {
 
 }
 
-
 class ParagraphHandler extends Handler <ParseElement> {
     private readonly visitable: IVisitable = new Visitable();
     private readonly visitor: IVisitor = new ParagraphVisitor();
@@ -178,9 +137,74 @@ class ParagraphHandler extends Handler <ParseElement> {
 
 }
 
-class Header1ChainHandler extends ParseChainHandler {
+export class Header1ChainHandler extends ParseChainHandler {
     constructor(document: IMarkdownDocument) {
+        super(document, "# ", new Header1Visitor());
+    }
+}
 
+class Header2ChainHandler extends ParseChainHandler {
+    constructor(document: IMarkdownDocument) {
+        super(document, "## ", new Header2Visitor());
+    }
+}
+
+class Header3ChainHandler extends ParseChainHandler {
+    constructor(document: IMarkdownDocument) {
+        super(document, "### ", new Header3Visitor());
+    }
+}
+
+class Header4ChainHandler extends ParseChainHandler {
+    constructor(document: IMarkdownDocument) {
+        super(document, "#### ", new Header4Visitor());
+    }
+}
+
+class Header5ChainHandler extends ParseChainHandler {
+    constructor(document: IMarkdownDocument) {
+        super(document, "##### ", new Header5Visitor());
+    }
+}
+
+class Header6ChainHandler extends ParseChainHandler {
+    constructor(document: IMarkdownDocument) {
+        super(document, "###### ", new Header6Visitor());
+    }
+}
+
+class BoldChainHandler extends ParseChainHandler {
+    constructor(document: IMarkdownDocument) {
+        super(document, "* ", new BoldVisitor());
+    }
+}
+
+class ItalicChainHandler extends ParseChainHandler {
+    constructor(document: IMarkdownDocument) {
+        super(document, "** ", new ItalicsVisitor());
+    }
+}
+
+class HorizontalRuleHandler extends ParseChainHandler {
+    constructor(document: IMarkdownDocument) {
+        super(document, "---", new HorizontalRuleVisitor());
+    }
+}
+
+export class ChainOfResponsibilityFactory {
+    Build(document: IMarkdownDocument): ParseChainHandler {
+        let header1: Header1ChainHandler = new Header1ChainHandler(document);
+        let header2: Header2ChainHandler = new Header2ChainHandler(document);
+        let header3: Header3ChainHandler = new Header3ChainHandler(document);
+        let horizontalRule: HorizontalRuleHandler = new HorizontalRuleHandler(document);
+        let paragraph: ParagraphHandler = new ParagraphHandler(document);
+
+        header1.SetNext(header2);
+        header2.SetNext(header3);
+        header3.SetNext(horizontalRule);
+        horizontalRule.SetNext(paragraph);
+
+        return header1;
     }
 }
 
@@ -199,5 +223,6 @@ class LineParser {
         return output;
     }
 }
+
 
 var handler = new HtmlHandler().TextChangeHandler("markdown", "markdown-output");

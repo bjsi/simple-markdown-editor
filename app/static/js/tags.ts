@@ -1,7 +1,7 @@
 /**
- * An enum of the supported HTML tag types.
+ * Names of supported formatting tags.
  */
-export enum TagType {
+export enum TagName {
     Paragraph,
     Header1,
     Header2,
@@ -10,55 +10,54 @@ export enum TagType {
     Header5,
     Header6,
     Bold,
-    Italics,
+    Italic,
     HorizontalRule
 }
 
 /**
- * Creates a mapping between a tag's name and the HTML tag
+ * Maps tag names to HTML tags.
  */
-export class TagTypeToHtml{
-    private readonly tagType: Map<TagType, string> = new Map<TagType, string>();
+export class TagNameToHtml {
+    private readonly htmlTags: Map<TagName, string> = new Map<TagName, string>();
     constructor() {
-        this.tagType.set(TagType.Header1, "h1");
-        this.tagType.set(TagType.Header2, "h2");
-        this.tagType.set(TagType.Header3, "h3");
-        this.tagType.set(TagType.Header4, "h4");
-        this.tagType.set(TagType.Header5, "h5");
-        this.tagType.set(TagType.Header6, "h6");
-        this.tagType.set(TagType.Bold, "b");
-        this.tagType.set(TagType.Italics, "i");
-        this.tagType.set(TagType.Paragraph, "p");
-        this.tagType.set(TagType.HorizontalRule, "hr");
+        this.htmlTags.set(TagName.Header1, "h1");
+        this.htmlTags.set(TagName.Header2, "h2");
+        this.htmlTags.set(TagName.Header3, "h3");
+        this.htmlTags.set(TagName.Header4, "h4");
+        this.htmlTags.set(TagName.Header5, "h5");
+        this.htmlTags.set(TagName.Header6, "h6");
+        this.htmlTags.set(TagName.Paragraph, "p");
+        this.htmlTags.set(TagName.HorizontalRule, "hr");
     }
-    
+
     /**
-     * Finds unbracketed tags in tag map. Returns bracketed tag or bracketed p tag.
-     * @param tagType map of formatting names to html tags.
-     * @param openingTagPattern < or </.
-     * @returns Bracketed tag or a bracketed p tag.
+     * Get HTML tag according to the formatting name and the opening bracket pattern. 
+     * @param tagName Name of a supported formatting tag.
+     * @param openingPattern Either "<" for an opening bracket or "</" for a closing bracket
      */
-    private GetTag(tagType: TagType, openingTagPattern: string)  {
-        let tag = this.tagType.get(tagType);
+    private GetTag(tagName: TagName, openingPattern: string): string {
+        let tag = this.htmlTags.get(tagName);
         if (tag) {
-            return `${openingTagPattern}${tag}>`;
+            return `${openingPattern}${tag}>`;
         }
-        return `${openingTagPattern}p>`;
+        else {
+            return `${openingPattern}p>`;
+        }
     }
 
     /**
-     * Returns tag starting with <.
-     * @param tagType HTML tag.
+     * Get an opening HTML tag according to the formatting name.
+     * @param tagName Name of a supported formatting tag.
      */
-    public OpeningTag(tagType: TagType): string {
-        return this.GetTag(tagType, "<");
+    public getOpeningTag(tagName: TagName): string {
+        return this.GetTag(tagName, "<");
     }
 
     /**
-     * Returns tag starting with </.
-     * @param tagType HTML tag.
+     * Get a closing HTML tag according to the formatting name.
+     * @param tagName Name of a supported formatting tag.
      */
-    public ClosingTag(tagType: TagType): string {
-        return this.GetTag(tagType, "</");
+    public getClosingTag(tagName: TagName): string {
+        return this.GetTag(tagName, "</");
     }
 }

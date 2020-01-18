@@ -4,7 +4,7 @@ From Chapter 1 of Peter O'Hanlon's book, Advanced TypeScript Programming Project
 
 TODO:
 
-1. Split into separate files.
+~~1. Split into separate files.~~
 
 2. Add ability to Bold, Italics, List etc.
 

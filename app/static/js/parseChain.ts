@@ -137,15 +137,15 @@ class ChainOfResponsibilityFactory {
         let horizontalRule: HorizontalHandler = new HorizontalHandler(document);
         let paragraph: ParagraphHandler = new ParagraphHandler(document);
 
-        header1.SetNext(header2);
-        header2.SetNext(header3);
-        header3.SetNext(header4);
-        header4.SetNext(header5);
-        header5.SetNext(header6);
-        header6.SetNext(horizontalRule);
+        header1.SetNext(horizontalRule);
+        header2.SetNext(header1);
+        header3.SetNext(header2);
+        header4.SetNext(header3);
+        header5.SetNext(header4);
+        header6.SetNext(header5);
         horizontalRule.SetNext(paragraph);
 
-        return header1;
+        return header6;
     }
 }
 

@@ -27,6 +27,8 @@ export class TagNameToHtml {
         this.htmlTags.set(TagName.Header5, "h5");
         this.htmlTags.set(TagName.Header6, "h6");
         this.htmlTags.set(TagName.Paragraph, "p");
+        this.htmlTags.set(TagName.Bold, "b");
+        this.htmlTags.set(TagName.Italic, "i");
         this.htmlTags.set(TagName.HorizontalRule, "hr");
     }
 

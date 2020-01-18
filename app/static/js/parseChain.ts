@@ -1,4 +1,4 @@
-import { ParseElement } from './addHtmlTags'
+import { ParseElement, BoldVisitor, ItalicVisitor } from './addHtmlTags'
 import { IMarkdownDocument,
          MarkdownDocument } from './markdown'
 import { IVisitor,
@@ -44,11 +44,12 @@ class ParseChainHandler extends Handler<ParseElement> {
     private readonly visitable: IVisitable = new Visitable();
     constructor(private readonly document: IMarkdownDocument,
                 private readonly tagName: string,
+                private readonly markdownDoubleTag: boolean,
                 private readonly visitor: IVisitor){
                     super();
                 }
     protected CanHandle(request: ParseElement): boolean {
-        let split = new LineParser().Parse(request.CurrentLine, this.tagName);
+        let split = new LineParser().Parse(request.CurrentLine, this.tagName, this.markdownDoubleTag);
         if (split[0]) {
             request.CurrentLine = split[1];
             this.visitable.Accept(this.visitor, request, this.document);
@@ -58,16 +59,26 @@ class ParseChainHandler extends Handler<ParseElement> {
 }
 
 class LineParser {
-    public Parse(value: string, tag: string): [boolean, string] {
+    public Parse(value: string, tag: string, markdownDoubleTag: boolean): [boolean, string] {
         let output: [boolean, string] = [false, ""];
         output[1] = value;
         if (value === "") {
             return output;
         }
-        let split = value.startsWith(`${tag}`);
-        if (split) {
-            output[0] = true;
-            output[1] = value.substr(tag.length);
+        if (!markdownDoubleTag) {
+            let split = value.startsWith(`${tag}`);
+            if (split) {
+                output[0] = true;
+                output[1] = value.substr(tag.length);
+            }
+        }
+        else {
+            let start = value.startsWith(`${tag}`);
+            let end = value.endsWith(`${tag}`);
+            if (start && end) {
+                output[0] = true;
+                output[1] = value.slice(tag.length, value.length - tag.length);
+            }
         }
         return output;
     }
@@ -86,43 +97,56 @@ class ParagraphHandler extends Handler <ParseElement> {
     }
 }
 
+class BoldHandler extends ParseChainHandler {
+    constructor(document: IMarkdownDocument) {
+        super(document, "**", true, new BoldVisitor());
+    }
+}
+
+
+class ItalicHandler extends ParseChainHandler {
+    constructor(document: IMarkdownDocument) {
+        super(document, "*", true, new ItalicVisitor());
+    }
+}
+
 class Header1ChainHandler extends ParseChainHandler {
     constructor(document: IMarkdownDocument) {
-        super(document, "#", new Header1Visitor());
+        super(document, "#", false, new Header1Visitor());
     }
 }
 
 class Header2ChainHandler extends ParseChainHandler {
     constructor(document: IMarkdownDocument) {
-        super(document, "##", new Header2Visitor());
+        super(document, "##", false, new Header2Visitor());
     }
 }
 class Header3ChainHandler extends ParseChainHandler {
     constructor(document: IMarkdownDocument) {
-        super(document, "###", new Header3Visitor());
+        super(document, "###", false, new Header3Visitor());
     }
 }
 class Header4ChainHandler extends ParseChainHandler {
     constructor(document: IMarkdownDocument) {
-        super(document, "####", new Header4Visitor());
+        super(document, "####", false, new Header4Visitor());
     }
 }
 
 class Header5ChainHandler extends ParseChainHandler {
     constructor(document: IMarkdownDocument) {
-        super(document, "#####", new Header5Visitor());
+        super(document, "#####", false,  new Header5Visitor());
     }
 }
 
 class Header6ChainHandler extends ParseChainHandler {
     constructor(document: IMarkdownDocument) {
-        super(document, "######", new Header6Visitor());
+        super(document, "######", false, new Header6Visitor());
     }
 }
 
 class HorizontalHandler extends ParseChainHandler {
     constructor(document: IMarkdownDocument) {
-        super(document, "---", new HorizontalRuleVisitor())
+        super(document, "---", false, new HorizontalRuleVisitor())
     }
 }
 
@@ -136,14 +160,18 @@ class ChainOfResponsibilityFactory {
         let header6: Header6ChainHandler = new Header6ChainHandler(document);
         let horizontalRule: HorizontalHandler = new HorizontalHandler(document);
         let paragraph: ParagraphHandler = new ParagraphHandler(document);
+        let bold: BoldHandler = new BoldHandler(document);
+        let italic: ItalicHandler = new ItalicHandler(document);
 
-        header1.SetNext(horizontalRule);
-        header2.SetNext(header1);
-        header3.SetNext(header2);
-        header4.SetNext(header3);
-        header5.SetNext(header4);
         header6.SetNext(header5);
-        horizontalRule.SetNext(paragraph);
+        header5.SetNext(header4);
+        header4.SetNext(header3);
+        header3.SetNext(header2);
+        header2.SetNext(header1);
+        header1.SetNext(horizontalRule);
+        horizontalRule.SetNext(bold);
+        bold.SetNext(italic);
+        italic.SetNext(paragraph);
 
         return header6;
     }
